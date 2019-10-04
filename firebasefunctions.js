@@ -16,6 +16,23 @@ exports.createStripeCustomer = functions.auth.user().onCreate(async (user) => {
     const customer = await stripe.customers.create({ email: user.email });
     return admin.firestore().collection('stripe_customers').doc(user.uid).set({ customer_id: customer.id });
 });
+
+exports.needStripeAccount = functions.https.onCall(async (userName, userEmail ) => {
+  // let shipping = userAddress
+  // const shippingData = {
+  //   'address': {
+  //     'line1': this.shipping[0],
+  //     'line2': this.shipping[1],
+  //     'city': this.shipping[2],
+  //     'state': this.shipping[3],
+  //     'country': 'US'
+  //   },
+  //   'name': userName
+  // }
+  const idempotencyKey = userEmail;
+  const customer = await stripe.customers.create({ name: userName, email: userEmail }, { idempotency_key: idempotencyKey });
+  return admin.firestore().collection('stripe_customers').doc(customer_id).set({ customer_id: customer.id });
+});
 // CleanupUser Synchronizes Stripe and Firestore Customers
 // When a user deletes their account, clean up after them
 exports.cleanupUser = functions.auth.user().onDelete(async (user) => {
